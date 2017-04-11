@@ -1,0 +1,6 @@
+SECTION .data
+GLOBAL _bin_frankmbr_beg
+_bin_frankmbr_beg:
+INCBIN "res/frankmbr"
+GLOBAL _bin_frankmbr_end
+_bin_frankmbr_end:

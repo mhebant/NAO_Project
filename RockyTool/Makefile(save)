@@ -1,0 +1,59 @@
+TYPE=exec# shared, static or exec
+BUILD=debug# debug or release
+EXEC=rockytool
+CXXFLAGS=-Wall -std=c++11
+CXXFLAGS_debug=-g
+CXXFLAGS_release=-s -O2
+LDFLAGS=
+LDFLAGS_debug=
+LDFLAGS_release=
+INCLUDES=
+
+srcdir=./src
+hdir=./include
+objdir=./obj
+resdir=./res
+bindir=./bin
+CXX=g++
+AR=ar
+
+CXXFLAGS+= $(CXXFLAGS_$(BUILD)) -I$(hdir) $(INCLUDES)
+ifeq ($(TYPE),shared)
+	CXXFLAGS+= -fPIC
+endif
+LDFLAGS+= $(LDFLAGS_$(BUILD))
+SRC=$(wildcard $(srcdir)/*.cpp)
+RES=$(wildcard $(resdir)/*.*)
+OBJ=$(addprefix $(objdir)/,$(notdir $(SRC:.cpp=.o))) $(objdir)/res.o
+
+all: $(bindir)/$(EXEC)
+	@echo "$(EXEC) built ($(TYPE) $(BUILD))"
+
+$(bindir)/$(EXEC): $(OBJ)
+ifeq ($(TYPE),static)
+	@$(AR) -q $(bindir)/lib$(EXEC).a $^
+endif
+ifeq ($(TYPE),exec)
+	@$(CXX) -o $(bindir)/$(EXEC) $^ $(LDFLAGS)
+endif
+ifeq ($(TYPE),shared)
+	@$(CXX) -shared -fPIC -o $(bindir)/lib$(EXEC).so $^ $(LDFLAGS)
+endif
+
+#----DEPENDENCES----
+#ex: main.o: hello.h
+
+$(objdir)/%.o: $(srcdir)/%.cpp
+	@$(CXX) -c $(CXXFLAGS) -o $@ $<
+
+$(objdir)/res.o: $(RES)
+	@nasm -f elf64 -o $@ $(resdir)/res.asm
+
+.PHONY: clean mrproper
+
+clean:
+	@rm -rf $(objdir)/*.o
+
+mrproper: clean
+	@rm -rf $(bindir)/$(EXEC)
+	@rm -rf $(bindir)/frankmbr.bin
